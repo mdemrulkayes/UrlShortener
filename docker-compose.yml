@@ -1,0 +1,32 @@
+services:
+  urlshortener:
+    image: url-shortener-api
+    container_name: urlshortener
+    build:
+      context: .
+      dockerfile: src/UrlShortener/Dockerfile
+    ports:
+        - "8080:8080"
+        - "4443:4443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=4443
+      - ASPNETCORE_URLS=http://+:8080;https://+:4443
+      - ConnectionStrings__UrlShortenerDb=Host=postgre-db;Port=5432;Database=urlshortener;Username=urlshortener;Password=urlshortener
+    depends_on:
+      - postgre-db
+
+  postgre-db:
+    container_name: postgre-db
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: urlshortener
+      POSTGRES_PASSWORD: urlshortener
+      POSTGRES_DB: urlshortener
+    volumes:
+       - postgrevolume:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+volumes:
+    postgrevolume: 
