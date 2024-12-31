@@ -16,6 +16,23 @@ services:
     depends_on:
       - postgre-db
 
+  urlshortener-web:
+    image: url-shortener-web
+    container_name: urlshortener-web
+    build:
+      context: .
+      dockerfile: web/UrlShortener/Dockerfile
+    ports:
+        - "8081:81"
+        - "4444:444"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=81
+      - ASPNETCORE_HTTPS_PORTS=444
+      - UrlShortenerApi__Url=http://urlshortener:80
+    depends_on:
+      - urlshortener
+
   postgre-db:
     container_name: postgre-db
     image: postgres:latest
