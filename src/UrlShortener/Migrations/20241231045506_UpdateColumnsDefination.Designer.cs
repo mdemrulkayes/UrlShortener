@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UrlShortener.Db;
@@ -11,9 +12,11 @@ using UrlShortener.Db;
 namespace UrlShortener.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241231045506_UpdateColumnsDefination")]
+    partial class UpdateColumnsDefination
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,6 +44,10 @@ namespace UrlShortener.Migrations
                         .IsRequired()
                         .HasMaxLength(6)
                         .HasColumnType("character varying(6)");
+
+                    b.Property<string>("ShortUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

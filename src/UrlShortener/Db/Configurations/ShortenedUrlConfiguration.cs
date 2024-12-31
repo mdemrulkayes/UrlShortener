@@ -13,7 +13,6 @@ public class ShortenedUrlConfiguration : IEntityTypeConfiguration<ShortenedUrl>
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
         builder.Property(x => x.LongUrl).IsRequired();
-        builder.Property(x => x.ShortUrl).IsRequired();
 
         builder.HasIndex(x => x.ShortCode).IsUnique();
         builder.Property(x => x.ShortCode).HasMaxLength(6);
