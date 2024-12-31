@@ -3,8 +3,13 @@
     "Docker Compose": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "urlshortener-web",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}",
       "serviceActions": {
-        "urlshortener": "StartDebugging"
+        "urlshortener": "StartDebugging",
+        "postgre-db": "StartWithoutDebugging",
+        "urlshortener-web": "StartDebugging"
       }
     }
   }
