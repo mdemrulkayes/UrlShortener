@@ -43,3 +43,10 @@ steps:
     projects: '**/*.csproj'
     publishWebProjects: false
     arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact'
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)/bin/url-shortener-api/'
+    artifactName: 'UrlShortenerApi'
