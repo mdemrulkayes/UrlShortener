@@ -29,12 +29,12 @@ steps:
     projects: '**/*.sln'
     arguments: --configuration $(buildConfiguration)
 
-# - task: DotNetCoreCLI@2
-#   displayName: 'Run tests'
-#   inputs:
-#     command: 'test'
-#     projects: '**/*tests/*.csproj'
-#     arguments: '--configuration $(buildConfiguration)'
+- task: DotNetCoreCLI@2
+  displayName: 'Run tests'
+  inputs:
+    command: 'test'
+    projects: '**/*tests/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Publish the project'

@@ -6,6 +6,7 @@ namespace UrlShortener.Services;
 
 internal sealed class ShortenedUrlService(ApplicationDbContext dbContext)
 {
+    private const int ShortCodeLength = 6;
     public async Task<string> ShortenUrlAsync(string longUrl)
     {
         var (isLongUrlExists, shortCode) = await LongUrlExistsAsync(longUrl);
@@ -18,7 +19,7 @@ internal sealed class ShortenedUrlService(ApplicationDbContext dbContext)
         var shortenedUrl = new ShortenedUrl
         {
             LongUrl = longUrl,
-            ShortCode = GenerateShortCode()
+            ShortCode = Utils.GenerateShortCode(ShortCodeLength)
         };
         await dbContext.ShortenedUrls.AddAsync(shortenedUrl);
         await dbContext.SaveChangesAsync();
@@ -44,13 +45,5 @@ internal sealed class ShortenedUrlService(ApplicationDbContext dbContext)
         return await dbContext.ShortenedUrls
             .OrderByDescending(x => x.Id)
             .ToListAsync();
-    }
-
-    private string GenerateShortCode()
-    {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        var random = new Random();
-        return new string(Enumerable.Repeat(chars, 6)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
     }
 }
