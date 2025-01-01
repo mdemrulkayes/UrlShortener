@@ -1,3 +1,4 @@
+name: "UrlShortener"
 services:
   urlshortener:
     image: url-shortener-api
