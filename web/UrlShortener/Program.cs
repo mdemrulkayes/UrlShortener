@@ -1,4 +1,6 @@
 using MudBlazor.Services;
+using Refit;
+using UrlShortener.ApiServices;
 using UrlShortener.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
+builder.Services.AddRefitClient<IUserShortenerService>()
+    .ConfigureHttpClient(config =>
+    {
+        config.BaseAddress = new Uri(builder.Configuration["UrlShortenerApi:Url"]!);
+    });
 
 var app = builder.Build();
 

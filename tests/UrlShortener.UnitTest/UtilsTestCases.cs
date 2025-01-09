@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using UrlShortener.Api;
 
 namespace UrlShortener.UnitTest;
 
