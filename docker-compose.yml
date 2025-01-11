@@ -17,6 +17,8 @@ services:
       - ConnectionStrings__UrlShortenerDb=Host=postgre-db;Port=5432;Database=urlshortener;Username=urlshortener;Password=urlshortener
     depends_on:
       - postgre-db
+    networks:
+      - app-network
 
   urlshortener-web:
     image: url-shortener-web
@@ -34,6 +36,8 @@ services:
       - UrlShortenerApi__Url=https://urlshortener:443
     depends_on:
       - urlshortener
+    networks:
+      - app-network
 
   postgre-db:
     container_name: postgre-db
@@ -46,5 +50,13 @@ services:
        - postgrevolume:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - app-network
+
+
 volumes:
-    postgrevolume: 
+    postgrevolume:
+
+networks:
+  app-network:
+    driver: bridge
