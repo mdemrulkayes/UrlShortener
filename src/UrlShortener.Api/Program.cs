@@ -37,6 +37,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(opt => opt
+    .AllowAnyOrigin()
+    .AllowAnyHeader()
+    .AllowAnyMethod());
 
 app.MapPost("shorten", async (ShortenedUrlRequest request, ShortenedUrlService service) =>
 {

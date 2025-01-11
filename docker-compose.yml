@@ -1,11 +1,12 @@
 name: "UrlShortener"
+
 services:
   urlshortener:
     image: url-shortener-api
     container_name: urlshortener
     build:
       context: .
-      dockerfile: src/UrlShortener/Dockerfile
+      dockerfile: src/UrlShortener.Api/Dockerfile
     ports:
         - "8080:80"
         - "4443:443"
@@ -30,7 +31,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=81
       - ASPNETCORE_HTTPS_PORTS=444
-      - UrlShortenerApi__Url=http://urlshortener:80
+      - UrlShortenerApi__Url=https://urlshortener:443
     depends_on:
       - urlshortener
 

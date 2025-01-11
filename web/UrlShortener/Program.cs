@@ -10,10 +10,12 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
-builder.Services.AddRefitClient<IUserShortenerService>()
+builder.Services.AddRefitClient<IUrlShortenerService>()
     .ConfigureHttpClient(config =>
     {
         config.BaseAddress = new Uri(builder.Configuration["UrlShortenerApi:Url"]!);
+        config.DefaultRequestHeaders.Clear();
+        config.DefaultRequestHeaders.Add("Accept", "application/json");
     });
 
 var app = builder.Build();

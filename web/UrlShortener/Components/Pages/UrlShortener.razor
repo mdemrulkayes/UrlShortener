@@ -1,7 +1,31 @@
 ﻿@page "/urls"
+@using global::UrlShortener.Models
+@using global::UrlShortener.ApiServices
+
+
+@inject IUrlShortenerService UrlShortenerService
 
 <PageTitle>Url Shortener</PageTitle>
 
-@code {
+<MudDataGrid T="ShortenedUrl" Items="_shortenedUrls"
+             SortMode="SortMode.Multiple">
+    <Columns>
+        <SelectColumn T="ShortenedUrl" />
+        <PropertyColumn Property="x => x.Id" Title="ID" />
+        <PropertyColumn Property="x => x.LongUrl" Title="Long URL" />
+        <PropertyColumn Property="x => x.ShortCode" Title="Short Code" />
+        <PropertyColumn Property="x => x.CreatedAt" Title="Created Date" Format="dd/MM/yyyy" />
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="ShortenedUrl" />
+    </PagerContent>
+</MudDataGrid>
 
+@code {
+    private IEnumerable<ShortenedUrl> _shortenedUrls = new List<ShortenedUrl>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _shortenedUrls = await UrlShortenerService.GetUrls();
+    }
 }

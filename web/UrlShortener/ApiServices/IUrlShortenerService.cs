@@ -3,11 +3,11 @@ using UrlShortener.Models;
 
 namespace UrlShortener.ApiServices;
 
-public interface IUserShortenerService
+public interface IUrlShortenerService
 {
-    [Get("urls")]
+    [Get("/urls")]
     Task<IEnumerable<ShortenedUrl>> GetUrls();
 
-    [Post("shorten")]
+    [Post("/shorten")]
     Task<ShortenedUrl> ShortenUrl([Body] ShortenUrlRequest request);
 }
