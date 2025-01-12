@@ -4,27 +4,27 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+EXPOSE 81
+EXPOSE 444
 
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/UrlShortener.Api/UrlShortener.Api.csproj", "src/UrlShortener.Api/"]
-RUN dotnet restore "./src/UrlShortener.Api/UrlShortener.Api.csproj"
+COPY ["WEB/UrlShortener/UrlShortener.csproj", "WEB/UrlShortener/"]
+RUN dotnet restore "./WEB/UrlShortener/UrlShortener.csproj"
 COPY . .
-WORKDIR "/src/src/UrlShortener.Api"
-RUN dotnet build "./UrlShortener.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/WEB/UrlShortener"
+RUN dotnet build "./UrlShortener.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./UrlShortener.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./UrlShortener.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "UrlShortener.Api.dll"]
+ENTRYPOINT ["dotnet", "UrlShortener.dll"]

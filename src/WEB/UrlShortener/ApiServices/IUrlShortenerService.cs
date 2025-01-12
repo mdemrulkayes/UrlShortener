@@ -9,5 +9,5 @@ public interface IUrlShortenerService
     Task<IEnumerable<ShortenedUrl>> GetUrls();
 
     [Post("/shorten")]
-    Task<ShortenedUrl> ShortenUrl([Body] ShortenUrlRequest request);
+    Task ShortenUrl([Body] ShortenUrlRequest request);
 }

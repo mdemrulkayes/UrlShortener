@@ -6,7 +6,7 @@ services:
     container_name: urlshortener
     build:
       context: .
-      dockerfile: src/UrlShortener.Api/Dockerfile
+      dockerfile: src/API/UrlShortener.Api/Dockerfile
     ports:
         - "8080:80"
         - "4443:443"
@@ -25,7 +25,7 @@ services:
     container_name: urlshortener-web
     build:
       context: .
-      dockerfile: web/UrlShortener/Dockerfile
+      dockerfile: src/WEB/UrlShortener/Dockerfile
     ports:
         - "8081:81"
         - "4444:444"

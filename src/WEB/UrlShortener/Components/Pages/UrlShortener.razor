@@ -22,7 +22,7 @@
 <MudGrid Class="p-4">
     <MudItem xs="12">
         <MudDataGrid T="ShortenedUrl" Items="_shortenedUrls"
-                     SortMode="SortMode.Multiple">
+                     SortMode="SortMode.Multiple" Loading="_isDataLoading" LoadingProgressColor="Color.Primary">
             <Columns>
                 <SelectColumn T="ShortenedUrl" />
                 <PropertyColumn Property="x => x.Id" Title="ID" />
@@ -40,18 +40,23 @@
 
 @code {
     private IEnumerable<ShortenedUrl> _shortenedUrls = new List<ShortenedUrl>();
-    private readonly ShortenUrlRequest _requestModel = new();
+    private ShortenUrlRequest _requestModel = new();
+    private bool _isDataLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         _shortenedUrls = await UrlShortenerService.GetUrls();
+        _isDataLoading = false;
     }
 
     private async Task OnCreateShortenUrlSubmit(EditContext context)
     {
+        _isDataLoading = true;
         await UrlShortenerService.ShortenUrl(_requestModel);
         _shortenedUrls = await UrlShortenerService.GetUrls();
         Snackbar.Add("Shortened URL created successfully", Severity.Success);
+        _isDataLoading = false;
+        _requestModel = new ShortenUrlRequest();
         StateHasChanged();
     }
 }
