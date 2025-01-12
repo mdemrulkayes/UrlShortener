@@ -34,9 +34,12 @@
                 <MudDataGridPager T="ShortenedUrl" />
             </PagerContent>
         </MudDataGrid>
-
     </MudItem>
 </MudGrid>
+
+<MudOverlay Visible="_isDataLoading" DarkBackground="true" Absolute="true">
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+</MudOverlay>
 
 @code {
     private IEnumerable<ShortenedUrl> _shortenedUrls = new List<ShortenedUrl>();
