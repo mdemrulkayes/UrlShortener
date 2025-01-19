@@ -31,5 +31,5 @@ jobs:
           run: dotnet build ./UrlShortener.sln --configuration Release --no-restore
     
         - name: Test
-          run: dotnet test /tests/UrlShortener.UnitTest/UrlShortener.UnitTest.csproj --no-build --verbosity normal
+          run: dotnet test ./tests/UrlShortener.UnitTest/UrlShortener.UnitTest.csproj --no-build --verbosity normal
 
