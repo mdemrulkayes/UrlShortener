@@ -25,11 +25,11 @@ jobs:
             dotnet-version: 9.x
     
         - name: Install dependencies
-          run: dotnet restore
+          run: dotnet restore **/*.sln
     
         - name: Build
-          run: dotnet build --configuration Release
+          run: dotnet build **/*.sln --configuration Release
     
         - name: Test
-          run: dotnet test --no-build --verbosity normal
+          run: dotnet test **/tests/UrlShortener.UnitTest/UrlShortener.UnitTest.csproj --no-build --verbosity normal
 
