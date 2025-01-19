@@ -29,7 +29,7 @@ internal sealed class ShortenedUrlService(ApplicationDbContext dbContext)
     private async Task<(bool isExists, string? shortCode)> LongUrlExistsAsync(string longUrl)
     {
         var shortenedUrlDetails = await dbContext.ShortenedUrls
-            .FirstOrDefaultAsync(x => x.LongUrl.ToLower() == longUrl.ToLower());
+            .FirstOrDefaultAsync(x => string.Equals(x.LongUrl.ToLower(), longUrl.ToLower(), StringComparison.Ordinal));
         return (shortenedUrlDetails != null, shortenedUrlDetails?.ShortCode);
     }
 

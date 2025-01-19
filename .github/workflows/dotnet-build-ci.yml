@@ -1,0 +1,35 @@
+name: "UrlShortener-Ci-Build"
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+        - master
+        - develop
+        - dev
+    pull_request:
+        branches:
+        - master
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+    
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+    
+        - name: Setup .NET Core
+          uses: actions/setup-dotnet@v1
+          with:
+            dotnet-version: 9.x
+    
+        - name: Install dependencies
+          run: dotnet restore
+    
+        - name: Build
+          run: dotnet build --configuration Release
+    
+        - name: Test
+          run: dotnet test --no-build --verbosity normal
+

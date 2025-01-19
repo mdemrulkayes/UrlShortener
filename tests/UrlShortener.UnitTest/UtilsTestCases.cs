@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using Shouldly;
 using UrlShortener.Api;
 
 namespace UrlShortener.UnitTest;
@@ -10,6 +10,6 @@ public class UtilsTestCases
     {
         var shortCode = Utils.GenerateShortCode(6);
 
-        shortCode.Length.Should().Be(6);
+        shortCode.Length.ShouldBe(6);
     }
 }
