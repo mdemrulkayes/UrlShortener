@@ -1,7 +1,7 @@
 using System.Reflection;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using UrlShortener.Api.Db;
 using UrlShortener.Api.Dtos;
 using UrlShortener.Api.Services;
@@ -25,10 +25,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwaggerUI(opt =>
-    {
-        opt.SwaggerEndpoint("/openapi/v1.json", "Open API v1");
-    });
+    app.MapScalarApiReference();
 }
 
 using (var scope = app.Services.CreateScope())

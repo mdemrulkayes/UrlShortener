@@ -1,0 +1,83 @@
+name: "UrlShortener Validate Code Quality, Build, and Deploy"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["master", "develop", "dev"]
+  pull_request:
+    branches: ["master", "develop", "dev"]
+
+jobs:
+  checkout-and-install:
+    name: Checkout and Install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.x
+
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [checkout-and-install]
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # required to fetch internal or private CodeQL packs
+      packages: read
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build-mode: none
+    steps:
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - if: matrix.build-mode == 'manual'
+        shell: bash
+        run: |
+          echo 'If you are using a "manual" build mode for one or more of the' \
+              'languages you are analyzing, replace this with the commands to build' \
+              'your code, for example:'
+          echo '  make bootstrap'
+          echo '  make release'
+          exit 1
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+  build:
+    name: Build the application
+    runs-on: ubuntu-latest
+    if: ${{ always() && contains(needs.*.result, 'success') }}
+    needs: [checkout-and-install, analyze]
+
+    steps:
+      - name: Install dependencies
+        run: dotnet restore ./UrlShortener.sln
+
+      - name: Build
+        run: dotnet build ./UrlShortener.sln --configuration Release
+
+      - name: Test
+        run: dotnet test ./tests/UrlShortener.UnitTest/UrlShortener.UnitTest.csproj --configuration Release --verbosity normal
+
+      - name: Publish
+        run: dotnet publish ./UrlShortener/UrlShortener.csproj --configuration Release --output ./publish
