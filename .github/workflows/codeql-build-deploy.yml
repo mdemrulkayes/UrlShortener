@@ -66,7 +66,7 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 9.x
-          
+
       - name: Install dependencies
         run: dotnet restore ./UrlShortener.sln
 
@@ -76,5 +76,8 @@ jobs:
       - name: Test
         run: dotnet test ./tests/UrlShortener.UnitTest/UrlShortener.UnitTest.csproj --configuration Release --verbosity normal
 
-      - name: Publish
-        run: dotnet publish ./UrlShortener/UrlShortener.csproj --configuration Release --output ./publish
+      - name: Publish API
+        run: dotnet publish ./src/API/UrlShortener.Api --configuration Release --output ./publish/api
+
+      - name: Publish Web
+        run: dotnet publish ./src/WEB/UrlShortener/UrlShortener.csproj --configuration Release --output ./publish/web
