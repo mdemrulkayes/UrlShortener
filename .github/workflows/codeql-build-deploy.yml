@@ -8,23 +8,9 @@ on:
     branches: ["master", "develop", "dev"]
 
 jobs:
-  checkout-and-install:
-    name: Checkout and Install
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 9.x
-
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
-    needs: [checkout-and-install]
     permissions:
       # required for all workflows
       security-events: write
@@ -43,6 +29,9 @@ jobs:
           - language: csharp
             build-mode: none
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -67,9 +56,17 @@ jobs:
     name: Build the application
     runs-on: ubuntu-latest
     if: ${{ always() && contains(needs.*.result, 'success') }}
-    needs: [checkout-and-install, analyze]
+    needs: [analyze]
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.x
+          
       - name: Install dependencies
         run: dotnet restore ./UrlShortener.sln
 
