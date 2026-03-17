@@ -16,7 +16,7 @@ public class RedirectUrlEndpoint : EndpointWithoutRequest
 
     public override void Configure()
     {
-        Get("/{shortCode}");
+        Get("/{shortCode:regex(^[a-zA-Z0-9_-]+$)}");
         Group<UrlsGroup>();
         AllowAnonymous();
     }
