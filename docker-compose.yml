@@ -14,7 +14,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=80
       - ASPNETCORE_HTTPS_PORTS=443
-      - ConnectionStrings__UrlShortenerDb=Host=postgre-db;Port=5432;Database=urlshortener;Username=urlshortener;Password=urlshortener
+      - ConnectionStrings__UrlShortenerDb=Host=postgre-db;Port=5433;Database=urlshortener;Username=urlshortener;Password=urlshortener
     depends_on:
       - postgre-db
     networks:
@@ -47,9 +47,9 @@ services:
       POSTGRES_PASSWORD: urlshortener
       POSTGRES_DB: urlshortener
     volumes:
-       - postgrevolume:/var/lib/postgresql/data
+       - postgrevolume:/var/lib/postgresql
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - app-network
 

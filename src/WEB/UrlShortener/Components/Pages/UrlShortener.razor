@@ -1,4 +1,5 @@
 ﻿@page "/urls"
+@attribute [Authorize]
 
 @using global::UrlShortener.Models
 @using global::UrlShortener.ApiServices
@@ -10,56 +11,136 @@
 <EditForm Model="_requestModel" OnValidSubmit="OnCreateShortenUrlSubmit" FormName="ShortenForm">
     <DataAnnotationsValidator />
     <MudGrid Class="p-4">
-        <MudItem xs="8">
-            <MudTextField T="string" Variant="Variant.Outlined" Label="URL" @bind-Value="_requestModel.LongUrl" For="() => _requestModel.LongUrl" Margin="Margin.Dense" />
+        <MudItem xs="5">
+            <MudTextField T="string" Variant="Variant.Outlined" Label="URL" @bind-Value="_requestModel.LongUrl"
+                          For="() => _requestModel.LongUrl" Margin="Margin.Dense" />
         </MudItem>
-        <MudItem xs="4">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">Short URL</MudButton>
+        <MudItem xs="3">
+            <MudTextField T="string" Variant="Variant.Outlined" Label="Custom Alias (optional)"
+                          @bind-Value="_requestModel.CustomAlias" Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="2">
+            <MudDatePicker Label="Expires (optional)" @bind-Date="_expiryDate" Variant="Variant.Outlined"
+                           Margin="Margin.Dense" MinDate="DateTime.Today.AddDays(1)" />
+        </MudItem>
+        <MudItem xs="2">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">
+                Short URL</MudButton>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+    <MudSpacer />
+    <MudGrid Class="p-4">
+        <MudItem xs="12">
+            <MudDataGrid T="ShortenedUrl" Items="_shortenedUrls"                     SortMode="SortMode.Multiple" Loading="_isDataLoading"
+                         LoadingProgressColor="Color.Primary">
+                <Columns>
+                    <PropertyColumn Property="x => x.Id" Title="ID" />
+                    <PropertyColumn Property="x => x.LongUrl" Title="Long URL" />
+                    <PropertyColumn Property="x => x.ShortCode" Title="Short Code" />
+                    <PropertyColumn Property="x => x.ClickCount" Title="Clicks" />
+                    <PropertyColumn Property="x => x.IsActive" Title="Active" />
+                    <PropertyColumn Property="x => x.ExpiresAt" Title="Expires" Format="dd/MM/yyyy" />
+                    <PropertyColumn Property="x => x.CreatedAt" Title="Created" Format="dd/MM/yyyy" />
+                    <TemplateColumn Title="Actions">
+                        <CellTemplate>
+                            <MudIconButton
+                            Icon="@(context.Item.IsActive ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)"
+                            Size="Size.Small" OnClick="() => ToggleUrl(context.Item)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                           OnClick="() => DeleteUrl(context.Item)" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="ShortenedUrl" />
+                </PagerContent>
+            </MudDataGrid>
         </MudItem>
     </MudGrid>
-</EditForm>
-<MudSpacer />
-<MudGrid Class="p-4">
-    <MudItem xs="12">
-        <MudDataGrid T="ShortenedUrl" Items="_shortenedUrls"
-                     SortMode="SortMode.Multiple" Loading="_isDataLoading" LoadingProgressColor="Color.Primary">
-            <Columns>
-                <SelectColumn T="ShortenedUrl" />
-                <PropertyColumn Property="x => x.Id" Title="ID" />
-                <PropertyColumn Property="x => x.LongUrl" Title="Long URL" />
-                <PropertyColumn Property="x => x.ShortCode" Title="Short Code" />
-                <PropertyColumn Property="x => x.CreatedAt" Title="Created Date" Format="dd/MM/yyyy" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="ShortenedUrl" />
-            </PagerContent>
-        </MudDataGrid>
-    </MudItem>
-</MudGrid>
 
-<MudOverlay Visible="_isDataLoading" DarkBackground="true" Absolute="true">
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-</MudOverlay>
+    <MudOverlay Visible="_isDataLoading" DarkBackground="true" Absolute="true">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudOverlay>
 
 @code {
     private IEnumerable<ShortenedUrl> _shortenedUrls = new List<ShortenedUrl>();
     private ShortenUrlRequest _requestModel = new();
+    private DateTime? _expiryDate;
     private bool _isDataLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        _shortenedUrls = await UrlShortenerService.GetUrls();
-        _isDataLoading = false;
+        await LoadUrls();
+    }
+
+    private async Task LoadUrls()
+    {
+        _isDataLoading = true;
+        try
+        {
+            _shortenedUrls = await UrlShortenerService.GetUrls();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Failed to load URLs", Severity.Error);
+        }
+        finally
+        {
+            _isDataLoading = false;
+        }
     }
 
     private async Task OnCreateShortenUrlSubmit(EditContext context)
     {
         _isDataLoading = true;
-        await UrlShortenerService.ShortenUrl(_requestModel);
-        _shortenedUrls = await UrlShortenerService.GetUrls();
-        Snackbar.Add("Shortened URL created successfully", Severity.Success);
-        _isDataLoading = false;
-        _requestModel = new ShortenUrlRequest();
-        StateHasChanged();
+        try
+        {
+            if (_expiryDate.HasValue)
+                _requestModel.ExpiresAt = _expiryDate.Value.ToUniversalTime();
+
+            await UrlShortenerService.ShortenUrl(_requestModel);
+            await LoadUrls();
+            Snackbar.Add("Shortened URL created successfully", Severity.Success);
+            _requestModel = new ShortenUrlRequest();
+            _expiryDate = null;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Failed to create shortened URL", Severity.Error);
+        }
+        finally
+        {
+            _isDataLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleUrl(ShortenedUrl url)
+    {
+        try
+        {
+            await UrlShortenerService.ToggleUrl(url.Id);
+            await LoadUrls();
+            Snackbar.Add($"URL {(url.IsActive ? "deactivated" : "activated")}", Severity.Success);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Failed to toggle URL", Severity.Error);
+        }
+    }
+
+    private async Task DeleteUrl(ShortenedUrl url)
+    {
+        try
+        {
+            await UrlShortenerService.DeleteUrl(url.Id);
+            await LoadUrls();
+            Snackbar.Add("URL deleted", Severity.Success);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Failed to delete URL", Severity.Error);
+        }
     }
 }

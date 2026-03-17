@@ -1,19 +1,46 @@
 @UrlShortener_HostAddress = https://localhost:4443
 
-###
-GET {{UrlShortener_HostAddress}}/urls
-
-###
-
-POST {{UrlShortener_HostAddress}}/shorten
+### Register
+POST {{UrlShortener_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
-    "LongUrl": "https://www.yahoo.com"
+    "email": "test@example.com",
+    "password": "Test@123",
+    "fullName": "Test User"
 }
 
-###
+### Login
+POST {{UrlShortener_HostAddress}}/api/auth/login
+Content-Type: application/json
 
+{
+    "email": "test@example.com",
+    "password": "Test@123"
+}
+
+### Get Current User (replace TOKEN)
+GET {{UrlShortener_HostAddress}}/api/auth/me
+Authorization: Bearer TOKEN
+
+### Create Short URL (replace TOKEN)
+POST {{UrlShortener_HostAddress}}/api/urls
+Content-Type: application/json
+Authorization: Bearer TOKEN
+
+{
+    "longUrl": "https://www.yahoo.com"
+}
+
+### List URLs (replace TOKEN)
+GET {{UrlShortener_HostAddress}}/api/urls
+Authorization: Bearer TOKEN
+
+### Redirect (public)
 GET {{UrlShortener_HostAddress}}/hkhuF2
+
+### Dashboard (replace TOKEN)
+GET {{UrlShortener_HostAddress}}/api/analytics/dashboard
+Authorization: Bearer TOKEN
 
 ###
