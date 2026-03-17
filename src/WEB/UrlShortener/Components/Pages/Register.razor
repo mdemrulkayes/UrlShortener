@@ -1,0 +1,80 @@
+@page "/register"
+@attribute [AllowAnonymous]
+
+@using global::UrlShortener.Models
+@using global::UrlShortener.ApiServices
+
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Register</PageTitle>
+
+<MudGrid Justify="Justify.Center" Class="mt-8">
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h5">Register</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <EditForm Model="_model" OnValidSubmit="OnSubmit" FormName="RegisterForm">
+                    <DataAnnotationsValidator />
+                    <MudTextField T="string" Label="Full Name" @bind-Value="_model.FullName" For="() => _model.FullName"
+                                  Variant="Variant.Outlined" Class="mb-3" />
+                    <MudTextField T="string" Label="Email" @bind-Value="_model.Email" For="() => _model.Email"
+                                  Variant="Variant.Outlined" InputType="InputType.Email" Class="mb-3" />
+                    <MudTextField T="string" Label="Password" @bind-Value="_model.Password" For="() => _model.Password"
+                                  Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
+                    <MudTextField T="string" Label="Confirm Password" @bind-Value="_model.ConfirmPassword"
+                                  For="() => _model.ConfirmPassword"                                  Variant="Variant.Outlined" InputType="InputType.Password"
+                                  Class="mb-3" />
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                               FullWidth="true" Disabled="_isLoading">
+                        @if (_isLoading)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        }
+                        Register
+                    </MudButton>
+                </EditForm>
+                <MudText Class="mt-4" Align="Align.Center">
+                    Already have an account? <MudLink Href="/login">Login</MudLink>
+                </MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private RegisterRequest _model = new();
+    private bool _isLoading;
+
+    private async Task OnSubmit()
+    {
+        _isLoading = true;
+        try
+        {
+            var response = await AuthService.Register(_model);
+            if (response.Success)
+            {
+                Snackbar.Add("Registration successful! Please login.", Severity.Success);
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                foreach (var error in response.Errors ?? [])
+                {
+                    Snackbar.Add(error, Severity.Error);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Registration failed. Please try again.", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

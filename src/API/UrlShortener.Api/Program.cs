@@ -1,23 +1,59 @@
-using System.Reflection;
-using FluentValidation;
+using System.Text;
+using FastEndpoints;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using UrlShortener.Api.Db;
-using UrlShortener.Api.Dtos;
-using UrlShortener.Api.Services;
+using UrlShortener.Api.Data;
+using UrlShortener.Api.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
-builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-builder.Services.AddCors();
-
+// Database
 builder.Services.AddDbContextPool<ApplicationDbContext>(opt =>
 {
     opt.UseNpgsql(builder.Configuration.GetConnectionString("UrlShortenerDb"));
 });
 
-builder.Services.AddScoped<ShortenedUrlService>();
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(opt =>
+{
+    opt.Password.RequireDigit = true;
+    opt.Password.RequireLowercase = true;
+    opt.Password.RequireUppercase = true;
+    opt.Password.RequireNonAlphanumeric = false;
+    opt.Password.RequiredLength = 6;
+    opt.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+// JWT Authentication
+var jwtKey = builder.Configuration["Jwt:Key"]!;
+builder.Services.AddAuthentication(opt =>
+{
+    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(opt =>
+{
+    opt.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
+builder.Services.AddAuthorization();
+builder.Services.AddFastEndpoints();
+builder.Services.AddOpenApi();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
@@ -25,9 +61,16 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(opt =>
+    {
+        opt.Title = "UrlShortener API Reference";
+        opt.Theme = ScalarTheme.DeepSpace;
+        opt.Layout = ScalarLayout.Modern;
+        opt.HideClientButton = true;
+    });
 }
 
+// Auto-migrate database
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -40,23 +83,9 @@ app.UseCors(opt => opt
     .AllowAnyHeader()
     .AllowAnyMethod());
 
-app.MapPost("shorten", async (ShortenedUrlRequest request, ShortenedUrlService service) =>
-{
-    if (!Uri.TryCreate(request.LongUrl, UriKind.Absolute, out _))
-    {
-        return Results.BadRequest("Invalid URL");
-    }
+app.UseAuthentication();
+app.UseAuthorization();
 
-    var shortCode = await service.ShortenUrlAsync(request.LongUrl);
-    return Results.Created($"/{shortCode}", shortCode);
-});
-
-app.MapGet("{shortCode}", async (string shortCode, ShortenedUrlService service) =>
-{
-    var longUrl = await service.GetLongUrlAsync(shortCode);
-    return longUrl is null ? Results.NotFound() : Results.Redirect(longUrl);
-});
-
-app.MapGet("urls", async (ShortenedUrlService urlService) => Results.Ok(await urlService.GetUrls()));
+app.UseFastEndpoints();
 
 app.Run();

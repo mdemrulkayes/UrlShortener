@@ -1,7 +1,10 @@
+using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using MudBlazor.Services;
 using Refit;
 using UrlShortener.ApiServices;
+using UrlShortener.Auth;
 using UrlShortener.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +12,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddBlazoredLocalStorage();
+
+// Auth
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
+builder.Services.AddScoped<JwtAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthHeaderHandler>();
 
 builder.Services.AddMudServices(opt =>
 {
@@ -21,19 +33,33 @@ builder.Services.AddMudServices(opt =>
     opt.SnackbarConfiguration.ShowTransitionDuration = 500;
     opt.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
 });
+
+var apiBaseUrl = builder.Configuration["UrlShortenerApi:Url"]!;
+
 builder.Services.AddRefitClient<IUrlShortenerService>()
     .ConfigureHttpClient(config =>
     {
-        config.BaseAddress = new Uri(builder.Configuration["UrlShortenerApi:Url"]!);
+        config.BaseAddress = new Uri(apiBaseUrl);
         config.DefaultRequestHeaders.Clear();
         config.DefaultRequestHeaders.Add("Accept", "application/json");
     })
-    .ConfigurePrimaryHttpMessageHandler(() =>
+    .AddHttpMessageHandler<AuthHeaderHandler>()
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
     {
-        return new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-        };
+        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+    });
+
+builder.Services.AddRefitClient<IAuthService>()
+    .ConfigureHttpClient(config =>
+    {
+        config.BaseAddress = new Uri(apiBaseUrl);
+        config.DefaultRequestHeaders.Clear();
+        config.DefaultRequestHeaders.Add("Accept", "application/json");
+    })
+    .AddHttpMessageHandler<AuthHeaderHandler>()
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
     });
 
 var app = builder.Build();

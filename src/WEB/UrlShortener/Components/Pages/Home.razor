@@ -1,7 +1,85 @@
 ﻿@page "/"
+@attribute [Authorize]
 
-<PageTitle>Home</PageTitle>
+@using global::UrlShortener.Models
+@using global::UrlShortener.ApiServices
 
-<h1>Hello, world!</h1>
+@inject IUrlShortenerService UrlShortenerService
+@inject ISnackbar Snackbar
 
-Welcome to your new app.
+<PageTitle>Dashboard</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_dashboard is not null)
+{
+    <MudGrid Class="pa-4">
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary">Total URLs</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.TotalUrls</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary">Total Clicks</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.TotalClicks</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary">Active URLs</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.ActiveUrls</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="pa-4">
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" Class="mb-2">Top URLs by Clicks</MudText>
+            <MudSimpleTable Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>Short Code</th>
+                        <th>Long URL</th>
+                        <th>Clicks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var url in _dashboard.TopUrls)
+                    {
+                        <tr>
+                            <td>@url.ShortCode</td>
+                            <td style="max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                @url.LongUrl</td>
+                                <td>@url.ClickCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>
+    }
+
+@code {
+    private DashboardResponse? _dashboard;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _dashboard = await UrlShortenerService.GetDashboard();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Failed to load dashboard", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

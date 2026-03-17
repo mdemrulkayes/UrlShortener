@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore
+        run: dotnet restore UrlShortener.sln
+
+      - name: Build
+        run: dotnet build UrlShortener.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/UrlShortener.UnitTest/UrlShortener.UnitTest.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Publish API
+        run: dotnet publish src/API/UrlShortener.Api/UrlShortener.Api.csproj --configuration Release --no-build --output ./publish/api
+
+      - name: Publish Web
+        run: dotnet publish src/WEB/UrlShortener/UrlShortener.csproj --configuration Release --no-build --output ./publish/web
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UrlShortenerApi
+          path: ./publish/api
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UrlShortenerWeb
+          path: ./publish/web

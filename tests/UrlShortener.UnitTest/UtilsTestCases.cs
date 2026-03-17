@@ -1,5 +1,5 @@
 ﻿using Shouldly;
-using UrlShortener.Api;
+using UrlShortener.Api.Common;
 
 namespace UrlShortener.UnitTest;
 
