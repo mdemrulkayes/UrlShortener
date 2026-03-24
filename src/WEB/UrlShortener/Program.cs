@@ -21,11 +21,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/login";
-        options.Events.OnRedirectToLogin = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
-        };
     });
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
@@ -47,31 +42,8 @@ builder.Services.AddMudServices(opt =>
 
 var apiBaseUrl = builder.Configuration["UrlShortenerApi:Url"]!;
 
-builder.Services.AddRefitClient<IUrlShortenerService>()
-    .ConfigureHttpClient(config =>
-    {
-        config.BaseAddress = new Uri(apiBaseUrl);
-        config.DefaultRequestHeaders.Clear();
-        config.DefaultRequestHeaders.Add("Accept", "application/json");
-    })
-    .AddHttpMessageHandler<AuthHeaderHandler>()
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-    });
+RegisterRefitServices(builder, apiBaseUrl);
 
-builder.Services.AddRefitClient<IAuthService>()
-    .ConfigureHttpClient(config =>
-    {
-        config.BaseAddress = new Uri(apiBaseUrl);
-        config.DefaultRequestHeaders.Clear();
-        config.DefaultRequestHeaders.Add("Accept", "application/json");
-    })
-    .AddHttpMessageHandler<AuthHeaderHandler>()
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-    });
 
 var app = builder.Build();
 
@@ -85,6 +57,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
@@ -93,3 +67,44 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+void RegisterRefitServices(WebApplicationBuilder webApplicationBuilder, string uri)
+{
+    webApplicationBuilder.Services.AddRefitClient<IUrlShortenerService>()
+        .ConfigureHttpClient(config =>
+        {
+            config.BaseAddress = new Uri(uri);
+            config.DefaultRequestHeaders.Clear();
+            config.DefaultRequestHeaders.Add("Accept", "application/json");
+        })
+        .AddHttpMessageHandler<AuthHeaderHandler>()
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        });
+
+    webApplicationBuilder.Services.AddRefitClient<IAuthService>()
+        .ConfigureHttpClient(config =>
+        {
+            config.BaseAddress = new Uri(uri);
+            config.DefaultRequestHeaders.Clear();
+            config.DefaultRequestHeaders.Add("Accept", "application/json");
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        });
+
+    webApplicationBuilder.Services.AddRefitClient<IUserService>()
+        .ConfigureHttpClient(config =>
+        {
+            config.BaseAddress = new Uri(uri);
+            config.DefaultRequestHeaders.Clear();
+            config.DefaultRequestHeaders.Add("Accept", "application/json");
+        })
+        .AddHttpMessageHandler<AuthHeaderHandler>()
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        });
+}

@@ -3,19 +3,12 @@ using Blazored.LocalStorage;
 
 namespace UrlShortener.Auth;
 
-public class AuthHeaderHandler : DelegatingHandler
+public class AuthHeaderHandler(ILocalStorageService localStorage) : DelegatingHandler
 {
-    private readonly ILocalStorageService _localStorage;
-
-    public AuthHeaderHandler(ILocalStorageService localStorage)
-    {
-        _localStorage = localStorage;
-    }
-
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var token = await _localStorage.GetItemAsStringAsync("authToken");
+        var token = await localStorage.GetItemAsStringAsync("authToken", cancellationToken);
         if (!string.IsNullOrWhiteSpace(token))
         {
             token = token.Trim('"');

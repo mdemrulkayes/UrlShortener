@@ -5,21 +5,15 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace UrlShortener.Auth;
 
-public class JwtAuthenticationStateProvider : AuthenticationStateProvider
+public class JwtAuthenticationStateProvider(ILocalStorageService localStorage) : AuthenticationStateProvider
 {
-    private readonly ILocalStorageService _localStorage;
     private readonly ClaimsPrincipal _anonymous = new(new ClaimsIdentity());
-
-    public JwtAuthenticationStateProvider(ILocalStorageService localStorage)
-    {
-        _localStorage = localStorage;
-    }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         try
         {
-            var token = await _localStorage.GetItemAsStringAsync("authToken");
+            var token = await localStorage.GetItemAsStringAsync("authToken");
             if (string.IsNullOrWhiteSpace(token))
                 return new AuthenticationState(_anonymous);
 
@@ -33,7 +27,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 
             if (jwt.ValidTo < DateTime.UtcNow)
             {
-                await _localStorage.RemoveItemAsync("authToken");
+                await localStorage.RemoveItemAsync("authToken");
                 return new AuthenticationState(_anonymous);
             }
 
