@@ -39,7 +39,7 @@ public class JwtAuthenticationStateProvider(TokenProvider tokenProvider) : Authe
         }
     }
 
-    public void NotifyUserAuthentication(string token)
+    public async Task NotifyUserAuthentication(string token)
     {
         tokenProvider.SetToken(token);
         var handler = new JwtSecurityTokenHandler();
@@ -47,6 +47,8 @@ public class JwtAuthenticationStateProvider(TokenProvider tokenProvider) : Authe
         var identity = new ClaimsIdentity(jwt.Claims, "jwt");
         var user = new ClaimsPrincipal(identity);
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+
+        await Task.Yield();
     }
 
     public void NotifyUserLogout()
