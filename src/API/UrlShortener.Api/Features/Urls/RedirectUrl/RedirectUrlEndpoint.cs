@@ -5,15 +5,8 @@ using UrlShortener.Api.Models;
 
 namespace UrlShortener.Api.Features.Urls.RedirectUrl;
 
-public class RedirectUrlEndpoint : EndpointWithoutRequest
+public class RedirectUrlEndpoint(ApplicationDbContext db) : EndpointWithoutRequest
 {
-    private readonly ApplicationDbContext _db;
-
-    public RedirectUrlEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Get("/{shortCode:regex(^[a-zA-Z0-9_-]+$)}");
@@ -24,7 +17,7 @@ public class RedirectUrlEndpoint : EndpointWithoutRequest
     public override async Task HandleAsync(CancellationToken ct)
     {
         var shortCode = Route<string>("shortCode")!;
-        var url = await _db.ShortenedUrls
+        var url = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.ShortCode == shortCode, ct);
 
         if (url is null)
@@ -54,8 +47,8 @@ public class RedirectUrlEndpoint : EndpointWithoutRequest
             UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
             IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
         };
-        _db.ClickEvents.Add(clickEvent);
-        await _db.SaveChangesAsync(ct);
+        db.ClickEvents.Add(clickEvent);
+        await db.SaveChangesAsync(ct);
 
         await SendRedirectAsync(url.LongUrl, isPermanent: false);
     }

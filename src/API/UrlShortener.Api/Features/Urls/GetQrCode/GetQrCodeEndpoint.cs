@@ -6,17 +6,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Urls.GetQrCode;
 
-public class GetQrCodeEndpoint : EndpointWithoutRequest
+public class GetQrCodeEndpoint(ApplicationDbContext db, IConfiguration config) : EndpointWithoutRequest
 {
-    private readonly ApplicationDbContext _db;
-    private readonly IConfiguration _config;
-
-    public GetQrCodeEndpoint(ApplicationDbContext db, IConfiguration config)
-    {
-        _db = db;
-        _config = config;
-    }
-
     public override void Configure()
     {
         Get("/api/urls/{id}/qrcode");
@@ -28,7 +19,7 @@ public class GetQrCodeEndpoint : EndpointWithoutRequest
         var id = Route<long>("id");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var url = await _db.ShortenedUrls
+        var url = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
 
         if (url is null)
@@ -37,7 +28,7 @@ public class GetQrCodeEndpoint : EndpointWithoutRequest
             return;
         }
 
-        var baseUrl = _config["AppSettings:BaseUrl"] ?? $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}";
+        var baseUrl = config["AppSettings:BaseUrl"] ?? $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}";
         var fullUrl = $"{baseUrl}/{url.ShortCode}";
 
         using var qrGenerator = new QRCodeGenerator();

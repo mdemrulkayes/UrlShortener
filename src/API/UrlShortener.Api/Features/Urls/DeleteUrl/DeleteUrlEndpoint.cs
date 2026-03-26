@@ -5,15 +5,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Urls.DeleteUrl;
 
-public class DeleteUrlEndpoint : EndpointWithoutRequest
+public class DeleteUrlEndpoint(ApplicationDbContext db) : EndpointWithoutRequest
 {
-    private readonly ApplicationDbContext _db;
-
-    public DeleteUrlEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Delete("/api/urls/{id}");
@@ -25,7 +18,7 @@ public class DeleteUrlEndpoint : EndpointWithoutRequest
         var id = Route<long>("id");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var url = await _db.ShortenedUrls
+        var url = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
 
         if (url is null)
@@ -34,8 +27,8 @@ public class DeleteUrlEndpoint : EndpointWithoutRequest
             return;
         }
 
-        _db.ShortenedUrls.Remove(url);
-        await _db.SaveChangesAsync(ct);
+        db.ShortenedUrls.Remove(url);
+        await db.SaveChangesAsync(ct);
         await SendNoContentAsync(ct);
     }
 }

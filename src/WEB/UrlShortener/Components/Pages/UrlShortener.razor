@@ -13,55 +13,55 @@
     <MudGrid Class="p-4">
         <MudItem xs="5">
             <MudTextField T="string" Variant="Variant.Outlined" Label="URL" @bind-Value="_requestModel.LongUrl"
-                          For="() => _requestModel.LongUrl" Margin="Margin.Dense" />
+                          For="() => _requestModel.LongUrl!" Margin="Margin.Dense" />
         </MudItem>
         <MudItem xs="3">
             <MudTextField T="string" Variant="Variant.Outlined" Label="Custom Alias (optional)"
                           @bind-Value="_requestModel.CustomAlias" Margin="Margin.Dense" />
         </MudItem>
-        <MudItem xs="2">
+        <MudItem xs="3">
             <MudDatePicker Label="Expires (optional)" @bind-Date="_expiryDate" Variant="Variant.Outlined"
                            Margin="Margin.Dense" MinDate="DateTime.Today.AddDays(1)" />
         </MudItem>
-        <MudItem xs="2">
+        <MudItem xs="4">
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">
-                Short URL</MudButton>
-            </MudItem>
-        </MudGrid>
-    </EditForm>
-    <MudSpacer />
-    <MudGrid Class="p-4">
-        <MudItem xs="12">
-            <MudDataGrid T="ShortenedUrl" Items="_shortenedUrls"                     SortMode="SortMode.Multiple" Loading="_isDataLoading"
-                         LoadingProgressColor="Color.Primary">
-                <Columns>
-                    <PropertyColumn Property="x => x.Id" Title="ID" />
-                    <PropertyColumn Property="x => x.LongUrl" Title="Long URL" />
-                    <PropertyColumn Property="x => x.ShortCode" Title="Short Code" />
-                    <PropertyColumn Property="x => x.ClickCount" Title="Clicks" />
-                    <PropertyColumn Property="x => x.IsActive" Title="Active" />
-                    <PropertyColumn Property="x => x.ExpiresAt" Title="Expires" Format="dd/MM/yyyy" />
-                    <PropertyColumn Property="x => x.CreatedAt" Title="Created" Format="dd/MM/yyyy" />
-                    <TemplateColumn Title="Actions">
-                        <CellTemplate>
-                            <MudIconButton
-                            Icon="@(context.Item.IsActive ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)"
-                            Size="Size.Small" OnClick="() => ToggleUrl(context.Item)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                           OnClick="() => DeleteUrl(context.Item)" />
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-                <PagerContent>
-                    <MudDataGridPager T="ShortenedUrl" />
-                </PagerContent>
-            </MudDataGrid>
+                Short URL
+            </MudButton>
         </MudItem>
     </MudGrid>
+</EditForm>
+<MudSpacer />
+<MudGrid Class="p-4">
+    <MudItem xs="12">
+        <MudDataGrid T="ShortenedUrl" Items="_shortenedUrls" SortMode="SortMode.Multiple" Loading="_isDataLoading"
+                     LoadingProgressColor="Color.Primary">
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="ID" />
+                <PropertyColumn Property="x => x.LongUrl" Title="Long URL" />
+                <PropertyColumn Property="x => x.ShortCode" Title="Short Code" />
+                <PropertyColumn Property="x => x.ClickCount" Title="Clicks" />
+                <PropertyColumn Property="x => x.IsActive" Title="Active" />
+                <PropertyColumn Property="x => x.ExpiresAt" Title="Expires" Format="dd/MM/yyyy" />
+                <PropertyColumn Property="x => x.CreatedAt" Title="Created" Format="dd/MM/yyyy" />
+                <TemplateColumn Title="Actions">
+                    <CellTemplate>
+                        <MudIconButton Icon="@(context.Item.IsActive? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)"
+                                       Size="Size.Small" OnClick="() => ToggleUrl(context.Item)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                       OnClick="() => DeleteUrl(context.Item)" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="ShortenedUrl" />
+            </PagerContent>
+        </MudDataGrid>
+    </MudItem>
+</MudGrid>
 
-    <MudOverlay Visible="_isDataLoading" DarkBackground="true" Absolute="true">
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-    </MudOverlay>
+<MudOverlay Visible="_isDataLoading" DarkBackground="true" Absolute="true">
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+</MudOverlay>
 
 @code {
     private IEnumerable<ShortenedUrl> _shortenedUrls = new List<ShortenedUrl>();

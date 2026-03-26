@@ -7,15 +7,8 @@ using UrlShortener.Api.Models;
 
 namespace UrlShortener.Api.Features.Urls.ShortenUrl;
 
-public class ShortenUrlEndpoint : Endpoint<ShortenUrlRequest, ShortenUrlResponse>
+public class ShortenUrlEndpoint(ApplicationDbContext db) : Endpoint<ShortenUrlRequest, ShortenUrlResponse>
 {
-    private readonly ApplicationDbContext _db;
-
-    public ShortenUrlEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Post("/api/urls");
@@ -29,7 +22,7 @@ public class ShortenUrlEndpoint : Endpoint<ShortenUrlRequest, ShortenUrlResponse
         // Check if custom alias is already taken
         if (!string.IsNullOrEmpty(req.CustomAlias))
         {
-            var aliasExists = await _db.ShortenedUrls
+            var aliasExists = await db.ShortenedUrls
                 .AnyAsync(x => x.ShortCode == req.CustomAlias, ct);
             if (aliasExists)
             {
@@ -40,7 +33,7 @@ public class ShortenUrlEndpoint : Endpoint<ShortenUrlRequest, ShortenUrlResponse
         }
 
         // Check if user already shortened this URL
-        var existing = await _db.ShortenedUrls
+        var existing = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.LongUrl.ToLower() == req.LongUrl.ToLower() && x.UserId == userId, ct);
 
         if (existing is not null)
@@ -64,8 +57,8 @@ public class ShortenUrlEndpoint : Endpoint<ShortenUrlRequest, ShortenUrlResponse
             UserId = userId
         };
 
-        await _db.ShortenedUrls.AddAsync(shortenedUrl, ct);
-        await _db.SaveChangesAsync(ct);
+        await db.ShortenedUrls.AddAsync(shortenedUrl, ct);
+        await db.SaveChangesAsync(ct);
 
         await SendCreatedAtAsync<ShortenUrlEndpoint>(
             routeValues: null,

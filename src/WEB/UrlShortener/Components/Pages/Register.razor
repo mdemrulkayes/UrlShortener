@@ -19,14 +19,14 @@
             <MudCardContent>
                 <EditForm Model="_model" OnValidSubmit="OnSubmit" FormName="RegisterForm">
                     <DataAnnotationsValidator />
-                    <MudTextField T="string" Label="Full Name" @bind-Value="_model.FullName" For="() => _model.FullName"
+                    <MudTextField T="string" Label="Full Name" @bind-Value="_model.FullName" For="() => _model.FullName!"
                                   Variant="Variant.Outlined" Class="mb-3" />
-                    <MudTextField T="string" Label="Email" @bind-Value="_model.Email" For="() => _model.Email"
+                    <MudTextField T="string" Label="Email" @bind-Value="_model.Email" For="() => _model.Email!"
                                   Variant="Variant.Outlined" InputType="InputType.Email" Class="mb-3" />
-                    <MudTextField T="string" Label="Password" @bind-Value="_model.Password" For="() => _model.Password"
+                    <MudTextField T="string" Label="Password" @bind-Value="_model.Password" For="() => _model.Password!"
                                   Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
                     <MudTextField T="string" Label="Confirm Password" @bind-Value="_model.ConfirmPassword"
-                                  For="() => _model.ConfirmPassword"                                  Variant="Variant.Outlined" InputType="InputType.Password"
+                                  For="() => _model.ConfirmPassword!" Variant="Variant.Outlined" InputType="InputType.Password"
                                   Class="mb-3" />
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
                                FullWidth="true" Disabled="_isLoading">
@@ -46,7 +46,7 @@
 </MudGrid>
 
 @code {
-    private RegisterRequest _model = new();
+    private readonly RegisterRequest _model = new();
     private bool _isLoading;
 
     private async Task OnSubmit()

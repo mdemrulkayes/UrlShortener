@@ -6,10 +6,10 @@
 @using global::UrlShortener.Auth
 
 @inject IAuthService AuthService
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject JwtAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IJSRuntime JsRuntime
 
 <PageTitle>Login</PageTitle>
 
@@ -22,9 +22,9 @@
             <MudCardContent>
                 <EditForm Model="_model" OnValidSubmit="OnSubmit" FormName="LoginForm">
                     <DataAnnotationsValidator />
-                    <MudTextField T="string" Label="Email" @bind-Value="_model.Email" For="() => _model.Email"
+                    <MudTextField T="string" Label="Email" @bind-Value="_model.Email" For="() => _model.Email!"
                                   Variant="Variant.Outlined" InputType="InputType.Email" Class="mb-3" />
-                    <MudTextField T="string" Label="Password" @bind-Value="_model.Password" For="() => _model.Password"
+                    <MudTextField T="string" Label="Password" @bind-Value="_model.Password" For="() => _model.Password!"
                                   Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
                                FullWidth="true" Disabled="_isLoading">
@@ -44,7 +44,7 @@
 </MudGrid>
 
 @code {
-    private LoginRequest _model = new();
+    private readonly LoginRequest _model = new();
     private bool _isLoading;
 
     private async Task OnSubmit()
@@ -53,7 +53,7 @@
         try
         {
             var response = await AuthService.Login(_model);
-            await LocalStorage.SetItemAsStringAsync("authToken", response.Token);
+            await JsRuntime.InvokeVoidAsync("authHelpers.setToken", response.Token);
             AuthStateProvider.NotifyUserAuthentication(response.Token);
             Snackbar.Add($"Welcome back, {response.FullName}!", Severity.Success);
             NavigationManager.NavigateTo("/");
