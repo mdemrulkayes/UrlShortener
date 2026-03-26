@@ -1,4 +1,4 @@
-﻿@page "/urls"
+@page "/urls"
 @attribute [Authorize]
 
 @using global::UrlShortener.Models
@@ -6,9 +6,10 @@
 
 @inject IUrlShortenerService UrlShortenerService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Url Shortener</PageTitle>
-<EditForm Model="_requestModel" OnValidSubmit="OnCreateShortenUrlSubmit" FormName="ShortenForm">
+<EditForm Model="_requestModel" OnValidSubmit="OnFormSubmit" FormName="ShortenForm">
     <DataAnnotationsValidator />
     <MudGrid Class="p-4">
         <MudItem xs="5">
@@ -17,16 +18,22 @@
         </MudItem>
         <MudItem xs="3">
             <MudTextField T="string" Variant="Variant.Outlined" Label="Custom Alias (optional)"
-                          @bind-Value="_requestModel.CustomAlias" Margin="Margin.Dense" />
+                          @bind-Value="_requestModel.CustomAlias" Margin="Margin.Dense" Disabled="_isEditing" />
         </MudItem>
         <MudItem xs="3">
             <MudDatePicker Label="Expires (optional)" @bind-Date="_expiryDate" Variant="Variant.Outlined"
                            Margin="Margin.Dense" MinDate="DateTime.Today.AddDays(1)" />
         </MudItem>
-        <MudItem xs="4">
+        <MudItem xs="4" Class="d-flex gap-2">
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">
-                Short URL
+                @(_isEditing ? "Update URL" : "Short URL")
             </MudButton>
+            @if (_isEditing)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Large" OnClick="ClearForm">
+                    Clear
+                </MudButton>
+            }
         </MudItem>
     </MudGrid>
 </EditForm>
@@ -45,10 +52,13 @@
                 <PropertyColumn Property="x => x.CreatedAt" Title="Created" Format="dd/MM/yyyy" />
                 <TemplateColumn Title="Actions">
                     <CellTemplate>
-                        <MudIconButton Icon="@(context.Item.IsActive? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)"
-                                       Size="Size.Small" OnClick="() => ToggleUrl(context.Item)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="() => EditUrl(context.Item)" />
+                        <MudIconButton
+                        Icon="@(context.Item.IsActive? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)"
+                        Size="Size.Small" OnClick="() => ToggleUrl(context.Item)" />
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                       OnClick="() => DeleteUrl(context.Item)" />
+                                       OnClick="() => ConfirmDeleteUrl(context.Item)" />
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
@@ -68,6 +78,8 @@
     private ShortenUrlRequest _requestModel = new();
     private DateTime? _expiryDate;
     private bool _isDataLoading = true;
+    private bool _isEditing;
+    private long? _editingUrlId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,29 +103,62 @@
         }
     }
 
-    private async Task OnCreateShortenUrlSubmit(EditContext context)
+    private async Task OnFormSubmit(EditContext context)
     {
         _isDataLoading = true;
         try
         {
-            if (_expiryDate.HasValue)
-                _requestModel.ExpiresAt = _expiryDate.Value.ToUniversalTime();
+            if (_isEditing && _editingUrlId.HasValue)
+            {
+                var updateRequest = new UpdateUrlRequest
+                {
+                    LongUrl = _requestModel.LongUrl,
+                    ExpiresAt = _expiryDate?.ToUniversalTime()
+                };
+                await UrlShortenerService.UpdateUrl(_editingUrlId.Value, updateRequest);
+                Snackbar.Add("URL updated successfully", Severity.Success);
+            }
+            else
+            {
+                if (_expiryDate.HasValue)
+                    _requestModel.ExpiresAt = _expiryDate.Value.ToUniversalTime();
 
-            await UrlShortenerService.ShortenUrl(_requestModel);
+                await UrlShortenerService.ShortenUrl(_requestModel);
+                Snackbar.Add("Shortened URL created successfully", Severity.Success);
+            }
+
+            ClearForm();
             await LoadUrls();
-            Snackbar.Add("Shortened URL created successfully", Severity.Success);
-            _requestModel = new ShortenUrlRequest();
-            _expiryDate = null;
         }
         catch (Exception)
         {
-            Snackbar.Add("Failed to create shortened URL", Severity.Error);
+            Snackbar.Add(_isEditing ? "Failed to update URL" : "Failed to create shortened URL", Severity.Error);
         }
         finally
         {
             _isDataLoading = false;
             StateHasChanged();
         }
+    }
+
+    private void EditUrl(ShortenedUrl url)
+    {
+        _isEditing = true;
+        _editingUrlId = url.Id;
+        _requestModel = new ShortenUrlRequest
+        {
+            LongUrl = url.LongUrl,
+            CustomAlias = url.CustomAlias
+        };
+        _expiryDate = url.ExpiresAt;
+    }
+
+    private void ClearForm()
+    {
+        _isEditing = false;
+        _editingUrlId = null;
+        _requestModel = new ShortenUrlRequest();
+        _expiryDate = null;
     }
 
     private async Task ToggleUrl(ShortenedUrl url)
@@ -127,6 +172,23 @@
         catch (Exception)
         {
             Snackbar.Add("Failed to toggle URL", Severity.Error);
+        }
+    }
+
+    private async Task ConfirmDeleteUrl(ShortenedUrl url)
+    {
+        var parameters = new DialogParameters<MudMessageBox>();
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var result = await DialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Are you sure you want to delete the URL with short code \"{url.ShortCode}\"?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (result == true)
+        {
+            await DeleteUrl(url);
         }
     }
 
