@@ -1,7 +1,8 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
 @inject NavigationManager NavigationManager
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
-@inject UrlShortener.Auth.JwtAuthenticationStateProvider AuthStateProvider
+@inject Auth.JwtAuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JsRuntime
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -12,7 +13,7 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
-                       OnClick="@((e) => DrawerToggle())" />
+                       OnClick="@((_) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Url Shortener Application</MudText>
         <MudSpacer />
         <AuthorizeView>
@@ -44,6 +45,11 @@
 @code {
     bool _drawerOpen = true;
 
+    protected override void OnInitialized()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+    }
+
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
@@ -51,8 +57,18 @@
 
     async Task Logout()
     {
-        await LocalStorage.RemoveItemAsync("authToken");
+        await JsRuntime.InvokeVoidAsync("authHelpers.clearToken");
         AuthStateProvider.NotifyUserLogout();
-        NavigationManager.NavigateTo("/login", forceLoad: true);
+        NavigationManager.NavigateTo("/login", true);
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
     }
 }

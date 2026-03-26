@@ -5,15 +5,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Urls.ToggleUrl;
 
-public class ToggleUrlEndpoint : EndpointWithoutRequest
+public class ToggleUrlEndpoint(ApplicationDbContext db) : EndpointWithoutRequest
 {
-    private readonly ApplicationDbContext _db;
-
-    public ToggleUrlEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Patch("/api/urls/{id}/toggle");
@@ -25,7 +18,7 @@ public class ToggleUrlEndpoint : EndpointWithoutRequest
         var id = Route<long>("id");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var url = await _db.ShortenedUrls
+        var url = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
 
         if (url is null)
@@ -35,7 +28,7 @@ public class ToggleUrlEndpoint : EndpointWithoutRequest
         }
 
         url.IsActive = !url.IsActive;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         await SendNoContentAsync(ct);
     }
 }

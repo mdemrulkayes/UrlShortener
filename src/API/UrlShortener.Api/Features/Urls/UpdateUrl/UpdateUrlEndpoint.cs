@@ -5,15 +5,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Urls.UpdateUrl;
 
-public class UpdateUrlEndpoint : Endpoint<UpdateUrlRequest>
+public class UpdateUrlEndpoint(ApplicationDbContext db) : Endpoint<UpdateUrlRequest>
 {
-    private readonly ApplicationDbContext _db;
-
-    public UpdateUrlEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Put("/api/urls/{id}");
@@ -25,7 +18,7 @@ public class UpdateUrlEndpoint : Endpoint<UpdateUrlRequest>
         var id = Route<long>("id");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var url = await _db.ShortenedUrls
+        var url = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
 
         if (url is null)
@@ -36,7 +29,7 @@ public class UpdateUrlEndpoint : Endpoint<UpdateUrlRequest>
 
         url.LongUrl = req.LongUrl;
         url.ExpiresAt = req.ExpiresAt;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         await SendNoContentAsync(ct);
     }

@@ -5,15 +5,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Analytics.GetDashboard;
 
-public class GetDashboardEndpoint : EndpointWithoutRequest<GetDashboardResponse>
+public class GetDashboardEndpoint(ApplicationDbContext db) : EndpointWithoutRequest<GetDashboardResponse>
 {
-    private readonly ApplicationDbContext _db;
-
-    public GetDashboardEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Get("/api/analytics/dashboard");
@@ -24,7 +17,7 @@ public class GetDashboardEndpoint : EndpointWithoutRequest<GetDashboardResponse>
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var urls = _db.ShortenedUrls.Where(x => x.UserId == userId);
+        var urls = db.ShortenedUrls.Where(x => x.UserId == userId);
 
         var totalUrls = await urls.CountAsync(ct);
         var totalClicks = await urls.SumAsync(x => x.ClickCount, ct);

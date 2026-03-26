@@ -4,15 +4,8 @@ using UrlShortener.Api.Models;
 
 namespace UrlShortener.Api.Features.Auth.Register;
 
-public class RegisterEndpoint : Endpoint<RegisterRequest, RegisterResponse>
+public class RegisterEndpoint(UserManager<ApplicationUser> userManager) : Endpoint<RegisterRequest, RegisterResponse>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public RegisterEndpoint(UserManager<ApplicationUser> userManager)
-    {
-        _userManager = userManager;
-    }
-
     public override void Configure()
     {
         Post("/api/auth/register");
@@ -29,7 +22,7 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, RegisterResponse>
             FullName = req.FullName
         };
 
-        var result = await _userManager.CreateAsync(user, req.Password);
+        var result = await userManager.CreateAsync(user, req.Password);
 
         if (!result.Succeeded)
         {

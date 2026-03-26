@@ -5,15 +5,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Urls.ListUrls;
 
-public class ListUrlsEndpoint : EndpointWithoutRequest<IEnumerable<ListUrlsResponse>>
+public class ListUrlsEndpoint(ApplicationDbContext db) : EndpointWithoutRequest<IEnumerable<ListUrlsResponse>>
 {
-    private readonly ApplicationDbContext _db;
-
-    public ListUrlsEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Get("/api/urls");
@@ -24,7 +17,7 @@ public class ListUrlsEndpoint : EndpointWithoutRequest<IEnumerable<ListUrlsRespo
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var urls = await _db.ShortenedUrls
+        var urls = await db.ShortenedUrls
             .Where(x => x.UserId == userId)
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new ListUrlsResponse

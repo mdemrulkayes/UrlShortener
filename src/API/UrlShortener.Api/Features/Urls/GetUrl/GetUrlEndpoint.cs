@@ -5,15 +5,8 @@ using UrlShortener.Api.Data;
 
 namespace UrlShortener.Api.Features.Urls.GetUrl;
 
-public class GetUrlEndpoint : EndpointWithoutRequest<GetUrlResponse>
+public class GetUrlEndpoint(ApplicationDbContext db) : EndpointWithoutRequest<GetUrlResponse>
 {
-    private readonly ApplicationDbContext _db;
-
-    public GetUrlEndpoint(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public override void Configure()
     {
         Get("/api/urls/{id}");
@@ -25,7 +18,7 @@ public class GetUrlEndpoint : EndpointWithoutRequest<GetUrlResponse>
         var id = Route<long>("id");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var url = await _db.ShortenedUrls
+        var url = await db.ShortenedUrls
             .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
 
         if (url is null)

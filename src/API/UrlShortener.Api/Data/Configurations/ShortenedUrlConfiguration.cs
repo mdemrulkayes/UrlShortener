@@ -12,7 +12,7 @@ public class ShortenedUrlConfiguration : IEntityTypeConfiguration<ShortenedUrl>
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
         builder.Property(x => x.LongUrl).IsRequired();
         builder.HasIndex(x => x.ShortCode).IsUnique();
-        builder.Property(x => x.ShortCode).HasMaxLength(10);
+        builder.Property(x => x.ShortCode).HasMaxLength(50);
         builder.Property(x => x.CustomAlias).HasMaxLength(50);
         builder.Property(x => x.IsActive).HasDefaultValue(true);
         builder.Property(x => x.ClickCount).HasDefaultValue(0);

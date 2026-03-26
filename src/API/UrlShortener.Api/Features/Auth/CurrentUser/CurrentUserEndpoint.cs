@@ -5,15 +5,8 @@ using UrlShortener.Api.Models;
 
 namespace UrlShortener.Api.Features.Auth.CurrentUser;
 
-public class CurrentUserEndpoint : EndpointWithoutRequest<CurrentUserResponse>
+public class CurrentUserEndpoint(UserManager<ApplicationUser> userManager) : EndpointWithoutRequest<CurrentUserResponse>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public CurrentUserEndpoint(UserManager<ApplicationUser> userManager)
-    {
-        _userManager = userManager;
-    }
-
     public override void Configure()
     {
         Get("/api/auth/me");
@@ -23,7 +16,7 @@ public class CurrentUserEndpoint : EndpointWithoutRequest<CurrentUserResponse>
     public override async Task HandleAsync(CancellationToken ct)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = await _userManager.FindByIdAsync(userId!);
+        var user = await userManager.FindByIdAsync(userId!);
 
         if (user is null)
         {

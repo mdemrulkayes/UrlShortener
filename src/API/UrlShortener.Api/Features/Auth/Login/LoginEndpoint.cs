@@ -8,17 +8,9 @@ using UrlShortener.Api.Models;
 
 namespace UrlShortener.Api.Features.Auth.Login;
 
-public class LoginEndpoint : Endpoint<LoginRequest, LoginResponse>
+public class LoginEndpoint(UserManager<ApplicationUser> userManager, IConfiguration config)
+    : Endpoint<LoginRequest, LoginResponse>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConfiguration _config;
-
-    public LoginEndpoint(UserManager<ApplicationUser> userManager, IConfiguration config)
-    {
-        _userManager = userManager;
-        _config = config;
-    }
-
     public override void Configure()
     {
         Post("/api/auth/login");
@@ -28,8 +20,8 @@ public class LoginEndpoint : Endpoint<LoginRequest, LoginResponse>
 
     public override async Task HandleAsync(LoginRequest req, CancellationToken ct)
     {
-        var user = await _userManager.FindByEmailAsync(req.Email);
-        if (user is null || !await _userManager.CheckPasswordAsync(user, req.Password))
+        var user = await userManager.FindByEmailAsync(req.Email);
+        if (user is null || !await userManager.CheckPasswordAsync(user, req.Password))
         {
             await SendUnauthorizedAsync(ct);
             return;
@@ -43,13 +35,13 @@ public class LoginEndpoint : Endpoint<LoginRequest, LoginResponse>
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiration = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:ExpirationInMinutes"]!));
+        var expiration = DateTime.UtcNow.AddMinutes(double.Parse(config["Jwt:ExpirationInMinutes"]!));
 
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
+            issuer: config["Jwt:Issuer"],
+            audience: config["Jwt:Audience"],
             claims: claims,
             expires: expiration,
             signingCredentials: creds);
